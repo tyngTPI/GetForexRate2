@@ -8,6 +8,8 @@ import com.example.getforexrate2.repository.ForexRateRepository;
 import com.example.getforexrate2.util.DateUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 @Service
 public class ForexService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ForexService.class);
+
     @Autowired
     private ForexRateRepository forexRateRepository;
 
@@ -27,9 +31,9 @@ public class ForexService {
 
     private static final String API_URL = "https://openapi.taifex.com.tw/v1/DailyForeignExchangeRates";
 
-    //@Scheduled(cron = "0 0 18 * * ?") // 每天18:00執行
-    @Scheduled(cron = "0 0 * * * *") // 每小時執行一次
+    @Scheduled(cron = "${forex.schedule.cron}")
     public void saveForexData() {
+        logger.info("開始呼叫外匯API");
         String jsonResp = restTemplate.getForObject(API_URL, String.class);
 
         if (jsonResp != null) {
@@ -65,16 +69,17 @@ public class ForexService {
                 // 批次寫入新資料
                 if (!newRates.isEmpty()) {
                     forexRateRepository.saveAll(newRates);
-                    //System.out.println("批次寫入成功。筆數: " + newRates.size());
                     for(ForexRate r : newRates) {
-                        System.out.println("資料寫入 日期: " + r.getDate());
+                        logger.info("資料寫入 日期: {}", r.getDate());
                     }
                 } else {
-                    System.out.println("無資料寫入");
+                    logger.info("無資料寫入");
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("獲取或寫入外匯資料時發生錯誤", e);
             }
+        } else {
+            logger.warn("外匯API回傳的資料為空");
         }
     }
 
@@ -84,6 +89,7 @@ public class ForexService {
         // 驗證日期格式 yyyy/MM/dd
         if (!DateUtil.isValidReqDate(req.getStartDate())||!DateUtil.isValidReqDate(req.getEndDate())) {
             resp.setError(new CurrencyRateResp.ErrorMsg("E001", "日期格式不符"));
+            logger.warn("日期格式不符: startDate={}, endDate={}", req.getStartDate(), req.getEndDate());
             return resp;
         }
 
@@ -93,17 +99,20 @@ public class ForexService {
         // 驗證日期區間
         if (!DateUtil.isDateRangeValid(startDate, endDate)) {
             resp.setError(new CurrencyRateResp.ErrorMsg("E001", "日期區間不符"));
+            logger.warn("日期區間不符: startDate={}, endDate={}", req.getStartDate(), req.getEndDate());
             return resp;
         }
 
         // 驗證幣別
         if (!"usd".equalsIgnoreCase(req.getCurrency())) {
             resp.setError(new CurrencyRateResp.ErrorMsg("E002", "僅可查詢美元 (USD)"));
+            logger.warn("幣別不符: currency={}", req.getCurrency());
             return resp;
         }
 
-        System.out.println("查詢日期起: " + startDate);
-        System.out.println("查詢日期迄: " + endDate);
+        logger.info("查詢日期起: " + startDate);
+        logger.info("查詢日期迄: " + endDate);
+
         // 查詢資料庫
         List<ForexRate> forexRates = forexRateRepository.findByDateRange(startDate, endDate);
 
@@ -118,6 +127,7 @@ public class ForexService {
 
         resp.setError(new CurrencyRateResp.ErrorMsg("0000", "成功"));
         resp.setCurrency(currencyDataList);
+        logger.info("查詢成功，返回 {} 筆資料", currencyDataList.size());
         return resp;
     }
 
