@@ -1,6 +1,5 @@
 package com.example.getforexrate2.util;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -37,7 +36,7 @@ public class DateUtil {
         try {
             reqDateFormat.parse(strDate);
             return true;
-        } catch (ParseException e) {
+        } catch (Exception e) {
             return false;
         }
     }

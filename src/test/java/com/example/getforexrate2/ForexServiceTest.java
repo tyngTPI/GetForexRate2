@@ -61,7 +61,7 @@ class ForexServiceTest {
     }
 
     @Test
-    void testSaveForexData_DataExists() throws Exception {
+    void testSaveForexData_DataExists() {
         // 模擬 API 回傳的 JSON 資料
         String jsonResponse = "[{\"Date\":\"20250102\",\"USD/NTD\":\"32.868\",\"RMB/NTD\":\"4.486909\",\"EUR/USD\":\"1.03575\""+
                 ",\"USD/JPY\":\"156.695\",\"GBP/USD\":\"1.25105\",\"AUD/USD\":\"0.62065\""+
@@ -98,7 +98,7 @@ class ForexServiceTest {
     }
 
     @Test
-    void testGetCurrencyRate_Success() throws Exception {
+    void testGetCurrencyRate_Success() {
         // 模擬Request
         CurrencyRateReq request = new CurrencyRateReq();
         request.setStartDate("2025/02/01");
