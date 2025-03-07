@@ -4,6 +4,8 @@ import com.example.getforexrate2.util.DateUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.util.Date;
+
 @Data
 public class JsonDailyForexRates {
     @JsonProperty("Date")
@@ -39,7 +41,7 @@ public class JsonDailyForexRates {
     @JsonProperty("NZD/USD")
     private Double nzdToUsdRate;
 
-    public String getDate_ConvertDBFormat() {
+    public Date getDate_ConvertDBFormat() {
         return DateUtil.apiToDbDateFormat(date);
     }
 }

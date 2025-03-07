@@ -5,6 +5,7 @@ import com.example.getforexrate2.dto.resp.CurrencyRateResp;
 import com.example.getforexrate2.model.ForexRate;
 import com.example.getforexrate2.repository.ForexRateRepository;
 import com.example.getforexrate2.service.ForexService;
+import com.example.getforexrate2.util.DateUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -37,7 +38,7 @@ class ForexServiceTest {
     }
 
     @Test
-    void testSaveForexData() throws Exception {
+    void testSaveForexData() {
         // 模擬 API 回傳的 JSON 資料
         String jsonResponse = "[{\"Date\":\"20250102\",\"USD/NTD\":\"32.868\",\"RMB/NTD\":\"4.486909\",\"EUR/USD\":\"1.03575\""+
                 ",\"USD/JPY\":\"156.695\",\"GBP/USD\":\"1.25105\",\"AUD/USD\":\"0.62065\""+
@@ -46,7 +47,7 @@ class ForexServiceTest {
         // 模擬 RestTemplate
         when(restTemplate.getForObject(anyString(), any())).thenReturn(jsonResponse);
 
-        // 模擬資料庫查詢（資料不存在）
+        // 模擬資料庫查詢（資料庫無資料）
         when(forexRateRepository.findDatesByDateIn(anyList())).thenReturn(Collections.emptyList());
 
         // 執行測試方法
@@ -71,7 +72,7 @@ class ForexServiceTest {
 
         // 模擬資料庫查詢（資料已存在）
         ForexRate forexRate = new ForexRate();
-        forexRate.setDate("2025-01-02 00:00:00");
+        forexRate.setDate(DateUtil.apiToDbDateFormat("20250102"));
         when(forexRateRepository.findDatesByDateIn(anyList())).thenReturn(Arrays.asList(forexRate));
 
         // 執行測試方法
@@ -97,7 +98,7 @@ class ForexServiceTest {
     }
 
     @Test
-    void testGetCurrencyRate_Success() {
+    void testGetCurrencyRate_Success() throws Exception {
         // 模擬Request
         CurrencyRateReq request = new CurrencyRateReq();
         request.setStartDate("2025/02/01");
@@ -106,16 +107,16 @@ class ForexServiceTest {
 
         // 模擬資料庫查詢結果
         ForexRate rate1 = new ForexRate();
-        rate1.setDate("2025-02-01 00:00:00");
+        rate1.setDate(DateUtil.reqToDbDateFormat("2025/02/01"));
         rate1.setCurrencyPair("USD/NTD");
         rate1.setRate(31.01);
 
         ForexRate rate2 = new ForexRate();
-        rate2.setDate("2024-02-02 00:00:00");
+        rate2.setDate(DateUtil.reqToDbDateFormat("20240202"));
         rate2.setCurrencyPair("USD/NTD");
         rate2.setRate(31.02);
 
-        when(forexRateRepository.findByDateRange(anyString(), anyString())).thenReturn(Arrays.asList(rate1, rate2));
+        when(forexRateRepository.findByDateRange(any(), any())).thenReturn(Arrays.asList(rate1, rate2));
 
         // 執行測試方法
         CurrencyRateResp response = forexService.getCurrencyRate(request);

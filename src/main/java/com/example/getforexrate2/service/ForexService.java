@@ -44,13 +44,13 @@ public class ForexService {
                 });
 
                 // 取得所有日期的列表
-                List<String> dates = listJsonRate.stream()
+                List<Date> dates = listJsonRate.stream()
                         .map(JsonDailyForexRates::getDate_ConvertDBFormat)
                         .collect(Collectors.toList());
 
                 // 查詢資料庫中已存在的日期
                 List<ForexRate> existingRates = forexRateRepository.findDatesByDateIn(dates);
-                List<String> existingDates = existingRates.stream()
+                List<Date> existingDates = existingRates.stream()
                         .map(ForexRate::getDate)
                         .collect(Collectors.toList());
 
@@ -70,7 +70,7 @@ public class ForexService {
                 if (!newRates.isEmpty()) {
                     forexRateRepository.saveAll(newRates);
                     for(ForexRate r : newRates) {
-                        logger.info("資料寫入 日期: {}", r.getDate());
+                        logger.info("資料寫入 日期: {}", DateUtil.dateToStr(r.getDate()));
                     }
                 } else {
                     logger.info("無資料寫入");
@@ -93,8 +93,8 @@ public class ForexService {
             return resp;
         }
 
-        String startDate = DateUtil.reqToDbDateFormat(req.getStartDate());
-        String endDate = DateUtil.reqToDbDateFormat(req.getEndDate());
+        Date startDate = DateUtil.reqToDbDateFormat(req.getStartDate());
+        Date endDate = DateUtil.reqToDbDateFormat(req.getEndDate());
 
         // 驗證日期區間
         if (!DateUtil.isDateRangeValid(startDate, endDate)) {
@@ -110,8 +110,8 @@ public class ForexService {
             return resp;
         }
 
-        logger.info("查詢日期起: " + startDate);
-        logger.info("查詢日期迄: " + endDate);
+        logger.info("查詢日期起: {}", req.getStartDate());
+        logger.info("查詢日期迄: {}", req.getEndDate());
 
         // 查詢資料庫
         List<ForexRate> forexRates = forexRateRepository.findByDateRange(startDate, endDate);
