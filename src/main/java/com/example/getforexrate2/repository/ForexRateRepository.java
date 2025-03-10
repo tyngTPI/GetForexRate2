@@ -18,9 +18,6 @@ public interface ForexRateRepository extends MongoRepository<ForexRate, String> 
     @Query(value = "{ 'date' : { $in: ?0 } }", fields = "{ 'date' : 1, '_id' : 0 }")
     List<ForexRate> findDatesByDateIn(List<Date> dates);
 
-    // 查詢日期區間的資料
-    List<ForexRate> findByDateBetween(Date startDate, Date endDate);
-
     @Query("{ 'date' : { $gte: ?0, $lte: ?1 } }")
     List<ForexRate> findByDateRange(Date startDate, Date endDate);
 }

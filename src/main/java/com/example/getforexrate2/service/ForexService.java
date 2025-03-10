@@ -3,7 +3,7 @@ package com.example.getforexrate2.service;
 import com.example.getforexrate2.dto.req.CurrencyRateReq;
 import com.example.getforexrate2.dto.resp.CurrencyRateResp;
 import com.example.getforexrate2.model.ForexRate;
-import com.example.getforexrate2.model.JsonDailyForexRates;
+import com.example.getforexrate2.dto.JsonDailyForexRates;
 import com.example.getforexrate2.repository.ForexRateRepository;
 import com.example.getforexrate2.util.DateUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -110,8 +110,7 @@ public class ForexService {
             return resp;
         }
 
-        logger.info("查詢日期起: {}", req.getStartDate());
-        logger.info("查詢日期迄: {}", req.getEndDate());
+        logger.info("查詢日期起迄: startDate={}, endDate={}", req.getStartDate(), req.getEndDate());
 
         // 查詢資料庫
         List<ForexRate> forexRates = forexRateRepository.findByDateRange(startDate, endDate);

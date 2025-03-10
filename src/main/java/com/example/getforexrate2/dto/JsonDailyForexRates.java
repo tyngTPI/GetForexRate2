@@ -1,4 +1,4 @@
-package com.example.getforexrate2.model;
+package com.example.getforexrate2.dto;
 
 import com.example.getforexrate2.util.DateUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
