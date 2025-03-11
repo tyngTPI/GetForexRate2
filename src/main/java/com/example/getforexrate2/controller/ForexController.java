@@ -3,8 +3,7 @@ package com.example.getforexrate2.controller;
 import com.example.getforexrate2.dto.req.CurrencyRateReq;
 import com.example.getforexrate2.dto.resp.CurrencyRateResp;
 import com.example.getforexrate2.service.ForexService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,9 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/forex")
+@Slf4j
 public class ForexController {
-
-    private static final Logger logger = LoggerFactory.getLogger(ForexController.class);
 
     @Autowired
     private ForexService forexService;
@@ -29,12 +27,12 @@ public class ForexController {
         try {
 
             forexService.saveForexData();
-            logger.info("API觸發外匯資料寫入成功");
+            log.info("API觸發外匯資料寫入成功");
             return ResponseEntity.ok("外匯資料已成功獲取並存入資料庫。");
 
         } catch (Exception e) {
             //擷取例外表示可能獲取外匯資料錯誤或寫入資料庫時發生錯誤
-            logger.error("API觸發外匯資料寫入時發生錯誤", e);
+            log.error("API觸發外匯資料寫入時發生錯誤", e);
             return ResponseEntity.internalServerError().body("獲取外匯資料時發生錯誤：" + e.getMessage());
         }
     }
