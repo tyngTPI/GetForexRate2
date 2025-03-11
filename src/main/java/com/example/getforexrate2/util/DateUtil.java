@@ -1,26 +1,34 @@
 package com.example.getforexrate2.util;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.TimeZone;
 
+/**
+ * 處理日期格式轉換和驗證
+ * 基本上以DB的日期格式處理，前端以字串呈現
+ */
 public class DateUtil {
-    //基本上以DB的日期格式處理
-    private static final SimpleDateFormat apiDateFormat = new SimpleDateFormat("yyyyMMdd");
-    private static final SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    private static final SimpleDateFormat reqDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-    private static final SimpleDateFormat respDateFormat = new SimpleDateFormat("yyyyMMdd");
+
+    private static SimpleDateFormat apiDateFormat = new SimpleDateFormat("yyyyMMdd"); //外匯API用的日期格式
+    private static SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //資料庫日期格式(以字串表示)
+    private static SimpleDateFormat reqDateFormat = new SimpleDateFormat("yyyy/MM/dd"); //Request請求用的日期格式
+    private static SimpleDateFormat respDateFormat = new SimpleDateFormat("yyyyMMdd"); //Response回應用的日期格式
 
     static {
-        // 設置時區為 UTC
+        // 設置時區為 UTC+8 (台灣時區)
         apiDateFormat.setTimeZone(TimeZone.getTimeZone("UTC+8"));
         dbDateFormat.setTimeZone(TimeZone.getTimeZone("UTC+8"));
         reqDateFormat.setTimeZone(TimeZone.getTimeZone("UTC+8"));
         respDateFormat.setTimeZone(TimeZone.getTimeZone("UTC+8"));
     }
 
-    // 格式化日期為 yyyyMMdd -> yyyy-MM-dd HH:mm:ss
+    /**
+     * 將 外匯API 回應中的日期字串（yyyyMMdd）轉換為資料庫儲存的日期格式（yyyy-MM-dd HH:mm:ss）
+     */
     public static Date apiToDbDateFormat(String strDate) {
         try {
             Date date = apiDateFormat.parse(strDate);
@@ -31,7 +39,9 @@ public class DateUtil {
         }
     }
 
-    // 驗證Request日期格式是否正確
+    /**
+     * 驗證Request參數中的日期字串是否符合指定的日期格式（yyyy/MM/dd）
+     */
     public static boolean isValidReqDate(String strDate) {
         try {
             reqDateFormat.parse(strDate);
@@ -41,28 +51,29 @@ public class DateUtil {
         }
     }
 
-    // 驗證日期區間是否符合1年前~當下日期-1天
+    /**
+     * 驗證日期區間是否在當下日期一年前到昨天之間
+     */
     public static boolean isDateRangeValid(Date startDate, Date endDate) {
         try {
 
-            // 計算一年前的日期
-            Calendar calendar = Calendar.getInstance();
-            calendar.add(Calendar.YEAR, -1);
-            Date oneYearAgo = calendar.getTime();
-
-            // 計算昨天的日期
-            calendar = Calendar.getInstance();
-            calendar.add(Calendar.DAY_OF_MONTH, -1);
-            Date yesterday = calendar.getTime();
+            // 將 Date 轉換為 LocalDate
+            LocalDate localStartDate = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate localEndDate = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate today = LocalDate.now();
+            LocalDate oneYearAgo = today.minus(Period.ofYears(1));
+            LocalDate yesterday = today.minus(Period.ofDays(1));
 
             // 檢查日期區間是否在一年前到昨天之間
-            return !startDate.before(oneYearAgo) && !endDate.after(yesterday) && !startDate.after(endDate);
+            return !localStartDate.isBefore(oneYearAgo) && !localEndDate.isAfter(yesterday) && !localStartDate.isAfter(localEndDate);
         } catch (Exception e) {
             return false;
         }
     }
 
-    // 格式化日期為 yyyy/MM/dd -> yyyy-MM-dd HH:mm:ss
+    /**
+     * 將Request參數中的日期字串（yyyy/MM/dd）轉換為資料庫儲存的日期格式（yyyy-MM-dd HH:mm:ss）
+     */
     public static Date reqToDbDateFormat(String strDate) {
         try {
             return reqDateFormat.parse(strDate);
@@ -71,7 +82,9 @@ public class DateUtil {
         }
     }
 
-    // 格式化日期為 yyyy-MM-dd HH:mm:ss -> yyyyMMdd
+    /**
+     * 將資料庫儲存的日期格式（yyyy-MM-dd HH:mm:ss）轉換為Response資料中的日期格式（yyyyMMdd）
+     */
     public static String dbToRespDateFormat(Date dDate) {
         try {
             return respDateFormat.format(dDate);
@@ -80,7 +93,9 @@ public class DateUtil {
         }
     }
 
-    // 日期為 yyyy-MM-dd HH:mm:ss 輸出為字串
+    /**
+     * 將日期格式化為字串 (yyyy-MM-dd HH:mm:ss)
+     */
     public static String dateToStr(Date dDate) {
         try {
             return dbDateFormat.format(dDate);

@@ -31,6 +31,10 @@ public class ForexService {
 
     private static final String API_URL = "https://openapi.taifex.com.tw/v1/DailyForeignExchangeRates";
 
+    /**
+     * 從 API 獲取外匯資料(USD/NTD)，並儲存到資料庫。
+     * 此方法會定期執行或外部呼叫執行
+     */
     @Scheduled(cron = "${forex.schedule.cron}")
     public void saveForexData() {
         logger.info("開始呼叫外匯API");
@@ -43,9 +47,9 @@ public class ForexService {
                 List<JsonDailyForexRates> listJsonRate = objectMapper.readValue(jsonResp, new TypeReference<>() {
                 });
 
-                // 取得所有日期的列表
+                // 取得API中所有日期的列表
                 List<Date> dates = listJsonRate.stream()
-                        .map(JsonDailyForexRates::getDate_ConvertDBFormat)
+                        .map(JsonDailyForexRates::getDateConvertDBFormat)
                         .collect(Collectors.toList());
 
                 // 查詢資料庫中已存在的日期
@@ -54,12 +58,12 @@ public class ForexService {
                         .map(ForexRate::getDate)
                         .collect(Collectors.toList());
 
-                // 過濾已存在日期的資料
+                // 過濾API中已存在資料庫日期的資料
                 List<ForexRate> newRates = listJsonRate.stream()
-                        .filter(jsonRate -> !existingDates.contains(jsonRate.getDate_ConvertDBFormat()))
+                        .filter(jsonRate -> !existingDates.contains(jsonRate.getDateConvertDBFormat()))
                         .map(jsonRate -> {
                             ForexRate forexRate = new ForexRate();
-                            forexRate.setDate(jsonRate.getDate_ConvertDBFormat());
+                            forexRate.setDate(jsonRate.getDateConvertDBFormat());
                             forexRate.setCurrencyPair("USD/NTD");
                             forexRate.setRate(jsonRate.getUsdToNtdRate());
                             return forexRate;
@@ -83,6 +87,9 @@ public class ForexService {
         }
     }
 
+    /**
+     * 依據請求參數，查詢指定日期區間的匯率資料
+     */
     public CurrencyRateResp getCurrencyRate(CurrencyRateReq req) {
         CurrencyRateResp resp = new CurrencyRateResp();
 

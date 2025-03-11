@@ -41,7 +41,7 @@ public class JsonDailyForexRates {
     @JsonProperty("NZD/USD")
     private Double nzdToUsdRate;
 
-    public Date getDate_ConvertDBFormat() {
+    public Date getDateConvertDBFormat() {
         return DateUtil.apiToDbDateFormat(date);
     }
 }

@@ -21,6 +21,9 @@ public class ForexController {
     @Autowired
     private ForexService forexService;
 
+    /**
+     * 觸發排程任務，立即執行外匯資料獲取和儲存
+     */
     @PostMapping("/saveRateRightNow")
     public ResponseEntity<String> getRateRightNow() {
         try {
@@ -30,11 +33,15 @@ public class ForexController {
             return ResponseEntity.ok("外匯資料已成功獲取並存入資料庫。");
 
         } catch (Exception e) {
+            //擷取例外表示可能獲取外匯資料錯誤或寫入資料庫時發生錯誤
             logger.error("API觸發外匯資料寫入時發生錯誤", e);
             return ResponseEntity.internalServerError().body("獲取外匯資料時發生錯誤：" + e.getMessage());
         }
     }
 
+    /**
+     * 依據請求參數，查詢指定日期區間的匯率資料
+     */
     @PostMapping("/getCurrRate")
     public ResponseEntity<CurrencyRateResp> getCurrencyRate(@RequestBody CurrencyRateReq req) {
         CurrencyRateResp resp = forexService.getCurrencyRate(req);
