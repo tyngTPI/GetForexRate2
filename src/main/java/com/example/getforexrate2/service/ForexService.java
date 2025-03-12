@@ -95,7 +95,7 @@ public class ForexService {
 
         // 驗證日期格式 yyyy/MM/dd
         if (!DateUtil.isValidReqDate(req.getStartDate()) || !DateUtil.isValidReqDate(req.getEndDate())) {
-            resp.setError(new CurrencyRateResp.ErrorMsg("E001", "日期格式不符"));
+            resp.setError(new CurrencyRateResp.ErrorMsg("E002", "日期格式不符"));
             log.warn("日期格式不符: startDate={}, endDate={}", req.getStartDate(), req.getEndDate());
             return resp;
         }
@@ -112,7 +112,7 @@ public class ForexService {
 
         // 驗證幣別
         if (!"usd".equalsIgnoreCase(req.getCurrency())) {
-            resp.setError(new CurrencyRateResp.ErrorMsg("E002", "僅可查詢美元 (USD)"));
+            resp.setError(new CurrencyRateResp.ErrorMsg("E003", "僅可查詢美元 (USD)"));
             log.warn("幣別不符: currency={}", req.getCurrency());
             return resp;
         }

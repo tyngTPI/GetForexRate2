@@ -139,7 +139,7 @@ class ForexServiceTest {
         CurrencyRateResp response = forexService.getCurrencyRate(request);
 
         // 驗證回應
-        assertEquals("E001", response.getError().getCode());
+        assertEquals("E002", response.getError().getCode());
         assertEquals("日期格式不符", response.getError().getMessage());
     }
 
@@ -171,7 +171,7 @@ class ForexServiceTest {
         CurrencyRateResp response = forexService.getCurrencyRate(request);
 
         // 驗證回應
-        assertEquals("E002", response.getError().getCode());
+        assertEquals("E003", response.getError().getCode());
         assertEquals("僅可查詢美元 (USD)", response.getError().getMessage());
     }
 
