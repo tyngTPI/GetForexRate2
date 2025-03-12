@@ -4,8 +4,17 @@
 
 ---
 [_單元測試與實際測試報告_](https://docs.google.com/document/d/1aK-UXU6YDLdi8GJCtX6O3qGS7acj_5SGtWZTz8ucmnQ/edit?usp=sharing)
+- 加上log以利檢視測試內容
+- 定義Error Code
+
+| code | message |
+|------|---------|
+| E001 | 日期區間不符 |
+| E002 | 日期格式不符 |
+| E003 | 僅可查詢美元 (USD) |
 
 
+\
 [_Code Review對談內容_](https://docs.google.com/document/d/1Ey7pXwDYz56bWWjeX6FlroPb2QnEo-kRn7sjyuL8_J0/edit?usp=sharing)\
 此專案已自行以 ****Gemini**** 進行Code review<br/>
 總體來說，程式碼具有良好的程式碼風格、合理的程式碼結構和較高的程式碼品質。透過建議的優化，可以進一步提高程式碼的可讀性、可維護性和執行效率。
