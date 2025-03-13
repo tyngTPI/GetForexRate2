@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
@@ -92,6 +93,39 @@ class ForexServiceTest {
 
         // 執行測試方法
         forexService.saveForexData();
+
+        // 驗證 Repository 的 saveAll 方法沒有被呼叫
+        verify(forexRateRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void testSaveForexData_ApiNoResponse() {
+        // 模擬 RestTemplate 拋出 RestClientException（API無回應）
+        when(restTemplate.getForObject(anyString(), any())).thenThrow(new RestClientException("API無回應"));
+
+        // 執行測試方法
+        forexService.saveForexData();
+
+        // 驗證 RestTemplate 是否被呼叫
+        verify(restTemplate, times(1)).getForObject(anyString(), any());
+
+        // 驗證 Repository 的 saveAll 方法沒有被呼叫
+        verify(forexRateRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void testSaveForexData_InvalidJsonFormat() {
+        // 模擬 API 回傳的 JSON 格式不符
+        String invalidJsonResponse = "[InvalidJsonFormat]";
+
+        // 模擬 RestTemplate
+        when(restTemplate.getForObject(anyString(), any())).thenReturn(invalidJsonResponse);
+
+        // 執行測試方法
+        forexService.saveForexData();
+
+        // 驗證 RestTemplate 是否被呼叫
+        verify(restTemplate, times(1)).getForObject(anyString(), any());
 
         // 驗證 Repository 的 saveAll 方法沒有被呼叫
         verify(forexRateRepository, never()).saveAll(anyList());

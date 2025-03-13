@@ -6,12 +6,14 @@ import com.example.getforexrate2.dto.resp.CurrencyRateResp;
 import com.example.getforexrate2.model.ForexRate;
 import com.example.getforexrate2.repository.ForexRateRepository;
 import com.example.getforexrate2.util.DateUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -37,53 +39,61 @@ public class ForexService {
      */
     @Scheduled(cron = "${forex.schedule.cron}")
     public void saveForexData() {
-        log.info("開始呼叫外匯API");
-        String jsonResp = restTemplate.getForObject(API_URL, String.class);
+        try {
+            // 呼叫API並獲取JSON回應
+            log.info("開始呼叫外匯API");
+            String jsonResp = restTemplate.getForObject(API_URL, String.class);
 
-        if (jsonResp != null) {
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                // 將 JSON 字串解析為 List<JsonDailyForexRates>
-                List<JsonDailyForexRates> listJsonRate = objectMapper.readValue(jsonResp, new TypeReference<>() {
-                });
+            if (jsonResp != null) {
+                try {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    // 將 JSON 字串解析為 List<JsonDailyForexRates>
+                    List<JsonDailyForexRates> listJsonRate = objectMapper.readValue(jsonResp, new TypeReference<>() {
+                    });
 
-                // 取得API中所有日期的列表
-                List<Date> dates = listJsonRate.stream()
-                        .map(JsonDailyForexRates::getDateConvertDBFormat)
-                        .collect(Collectors.toList());
+                    // 取得API中所有日期的列表
+                    List<Date> dates = listJsonRate.stream()
+                            .map(JsonDailyForexRates::getDateConvertDBFormat)
+                            .collect(Collectors.toList());
 
-                // 查詢資料庫中已存在的日期
-                List<ForexRate> existingRates = forexRateRepository.findDatesByDateIn(dates);
-                List<Date> existingDates = existingRates.stream()
-                        .map(ForexRate::getDate)
-                        .collect(Collectors.toList());
+                    // 查詢資料庫中已存在的日期
+                    List<ForexRate> existingRates = forexRateRepository.findDatesByDateIn(dates);
+                    List<Date> existingDates = existingRates.stream()
+                            .map(ForexRate::getDate)
+                            .collect(Collectors.toList());
 
-                // 過濾API中已存在資料庫日期的資料
-                List<ForexRate> newRates = listJsonRate.stream()
-                        .filter(jsonRate -> !existingDates.contains(jsonRate.getDateConvertDBFormat()))
-                        .map(jsonRate -> {
-                            ForexRate forexRate = new ForexRate();
-                            forexRate.setDate(jsonRate.getDateConvertDBFormat());
-                            forexRate.setCurrencyPair("USD/NTD");
-                            forexRate.setRate(jsonRate.getUsdToNtdRate());
-                            return forexRate;
-                        })
-                        .collect(Collectors.toList());
+                    // 過濾API中已存在資料庫日期的資料
+                    List<ForexRate> newRates = listJsonRate.stream()
+                            .filter(jsonRate -> !existingDates.contains(jsonRate.getDateConvertDBFormat()))
+                            .map(jsonRate -> {
+                                ForexRate forexRate = new ForexRate();
+                                forexRate.setDate(jsonRate.getDateConvertDBFormat());
+                                forexRate.setCurrencyPair("USD/NTD");
+                                forexRate.setRate(jsonRate.getUsdToNtdRate());
+                                return forexRate;
+                            })
+                            .collect(Collectors.toList());
 
-                // 批次寫入新資料
-                if (!newRates.isEmpty()) {
-                    forexRateRepository.saveAll(newRates);
-                    for (ForexRate r : newRates) {
-                        log.info("資料寫入 日期: {}", DateUtil.dateToStr(r.getDate()));
+                    // 批次寫入新資料
+                    if (!newRates.isEmpty()) {
+                        forexRateRepository.saveAll(newRates);
+                        for (ForexRate r : newRates) {
+                            log.info("資料寫入 日期: {}", DateUtil.dateToStr(r.getDate()));
+                        }
+                    } else {
+                        log.info("無資料寫入");
                     }
-                } else {
-                    log.info("無資料寫入");
+                } catch (JsonProcessingException e) {
+                    log.error("JSON解析錯誤: {}", e.getMessage());
+                } catch (Exception e) {
+                    log.error("處理API回應時發生錯誤", e);
                 }
-            } catch (Exception e) {
-                log.error("獲取或寫入外匯資料時發生錯誤", e);
+            } else {
+                log.warn("外匯API回傳的資料為空");
             }
-        } else {
-            log.warn("外匯API回傳的資料為空");
+
+        } catch (RestClientException e) {
+            log.error("呼叫外匯API時發生錯誤: {}", e.getMessage());
         }
     }
 
