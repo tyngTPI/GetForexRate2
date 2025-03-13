@@ -8,14 +8,15 @@
   1. 預期結果(外匯API正常且存取正常、Forex API正常收發)
   2. 非預期結果(外匯API有誤或無回應、Forex API傳入request內容不符)
 - 加上log以利檢視程式內容
-- 定義Error Code
+- Forex API回應定義Error Code
 
-| code | message |
-|------|---------|
-| E001 | 日期區間不符 |
-| E002 | 日期格式不符 |
+| code | message      |
+|------|--------------|
+| 0000 | 成功           |
+| E001 | 日期區間不符       |
+| E002 | 日期格式不符       |
 | E003 | 僅可查詢美元 (USD) |
-
+| E999 | 系統錯誤         |
 
 \
 [_Code Review對談內容_](https://docs.google.com/document/d/1Ey7pXwDYz56bWWjeX6FlroPb2QnEo-kRn7sjyuL8_J0/edit?usp=sharing)\

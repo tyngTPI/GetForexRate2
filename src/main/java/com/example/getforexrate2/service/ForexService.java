@@ -103,48 +103,56 @@ public class ForexService {
     public CurrencyRateResp getCurrencyRate(CurrencyRateReq req) {
         CurrencyRateResp resp = new CurrencyRateResp();
 
-        // 驗證日期格式 yyyy/MM/dd
-        if (!DateUtil.isValidReqDate(req.getStartDate()) || !DateUtil.isValidReqDate(req.getEndDate())) {
-            resp.setError(new CurrencyRateResp.ErrorMsg("E002", "日期格式不符"));
-            log.warn("日期格式不符: startDate={}, endDate={}", req.getStartDate(), req.getEndDate());
+        try {
+
+            // 驗證日期格式 yyyy/MM/dd
+            if (!DateUtil.isValidReqDate(req.getStartDate()) || !DateUtil.isValidReqDate(req.getEndDate())) {
+                resp.setError(new CurrencyRateResp.ErrorMsg("E002", "日期格式不符"));
+                log.warn("日期格式不符: startDate={}, endDate={}", req.getStartDate(), req.getEndDate());
+                return resp;
+            }
+
+            Date startDate = DateUtil.reqToDbDateFormat(req.getStartDate());
+            Date endDate = DateUtil.reqToDbDateFormat(req.getEndDate());
+
+            // 驗證日期區間
+            if (!DateUtil.isDateRangeValid(startDate, endDate)) {
+                resp.setError(new CurrencyRateResp.ErrorMsg("E001", "日期區間不符"));
+                log.warn("日期區間不符: startDate={}, endDate={}", req.getStartDate(), req.getEndDate());
+                return resp;
+            }
+
+            // 驗證幣別
+            if (!"usd".equalsIgnoreCase(req.getCurrency())) {
+                resp.setError(new CurrencyRateResp.ErrorMsg("E003", "僅可查詢美元 (USD)"));
+                log.warn("幣別不符: currency={}", req.getCurrency());
+                return resp;
+            }
+
+            log.info("查詢日期起迄: startDate={}, endDate={}", req.getStartDate(), req.getEndDate());
+
+            // 查詢資料庫
+            List<ForexRate> forexRates = forexRateRepository.findByDateRange(startDate, endDate);
+
+            // RESP資料產出
+            List<CurrencyRateResp.CurrencyRateData> currencyDataList = new ArrayList<>();
+            for (ForexRate rate : forexRates) {
+                CurrencyRateResp.CurrencyRateData data = new CurrencyRateResp.CurrencyRateData();
+                data.setDate(DateUtil.dbToRespDateFormat(rate.getDate()));
+                data.setUsd(rate.getRate().toString()); // 匯率
+                currencyDataList.add(data);
+            }
+
+            resp.setError(new CurrencyRateResp.ErrorMsg("0000", "成功"));
+            resp.setCurrency(currencyDataList);
+            log.info("查詢成功，返回 {} 筆資料", currencyDataList.size());
+            return resp;
+
+        } catch (Exception e) {
+            log.error("發生非預期系統錯誤", e);
+            resp.setError(new CurrencyRateResp.ErrorMsg("E999", "系統錯誤"));
             return resp;
         }
-
-        Date startDate = DateUtil.reqToDbDateFormat(req.getStartDate());
-        Date endDate = DateUtil.reqToDbDateFormat(req.getEndDate());
-
-        // 驗證日期區間
-        if (!DateUtil.isDateRangeValid(startDate, endDate)) {
-            resp.setError(new CurrencyRateResp.ErrorMsg("E001", "日期區間不符"));
-            log.warn("日期區間不符: startDate={}, endDate={}", req.getStartDate(), req.getEndDate());
-            return resp;
-        }
-
-        // 驗證幣別
-        if (!"usd".equalsIgnoreCase(req.getCurrency())) {
-            resp.setError(new CurrencyRateResp.ErrorMsg("E003", "僅可查詢美元 (USD)"));
-            log.warn("幣別不符: currency={}", req.getCurrency());
-            return resp;
-        }
-
-        log.info("查詢日期起迄: startDate={}, endDate={}", req.getStartDate(), req.getEndDate());
-
-        // 查詢資料庫
-        List<ForexRate> forexRates = forexRateRepository.findByDateRange(startDate, endDate);
-
-        // RESP資料產出
-        List<CurrencyRateResp.CurrencyRateData> currencyDataList = new ArrayList<>();
-        for (ForexRate rate : forexRates) {
-            CurrencyRateResp.CurrencyRateData data = new CurrencyRateResp.CurrencyRateData();
-            data.setDate(DateUtil.dbToRespDateFormat(rate.getDate()));
-            data.setUsd(rate.getRate().toString()); // 匯率
-            currencyDataList.add(data);
-        }
-
-        resp.setError(new CurrencyRateResp.ErrorMsg("0000", "成功"));
-        resp.setCurrency(currencyDataList);
-        log.info("查詢成功，返回 {} 筆資料", currencyDataList.size());
-        return resp;
     }
 
 }
