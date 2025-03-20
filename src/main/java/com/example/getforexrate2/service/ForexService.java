@@ -135,13 +135,14 @@ public class ForexService {
             List<ForexRate> forexRates = forexRateRepository.findByDateRange(startDate, endDate);
 
             // RESP資料產出
-            List<CurrencyRateResp.CurrencyRateData> currencyDataList = new ArrayList<>();
-            for (ForexRate rate : forexRates) {
-                CurrencyRateResp.CurrencyRateData data = new CurrencyRateResp.CurrencyRateData();
-                data.setDate(DateUtil.dbToRespDateFormat(rate.getDate()));
-                data.setUsd(rate.getRate().toString()); // 匯率
-                currencyDataList.add(data);
-            }
+            List<CurrencyRateResp.CurrencyRateData> currencyDataList = forexRates.stream()
+                    .map(rate -> {
+                        CurrencyRateResp.CurrencyRateData data = new CurrencyRateResp.CurrencyRateData();
+                        data.setDate(DateUtil.dbToRespDateFormat(rate.getDate()));
+                        data.setUsd(rate.getRate().toString()); // 匯率
+                        return data;
+                    })
+                    .collect(Collectors.toList());
 
             resp.setError(new CurrencyRateResp.ErrorMsg("0000", "成功"));
             resp.setCurrency(currencyDataList);
